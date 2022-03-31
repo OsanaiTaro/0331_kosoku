@@ -1,16 +1,10 @@
-import matplotlib.pyplot as plt
 import cv2
 import numpy as np
 import scipy.ndimage
-from IPython.display import Image, display_png
-import pandas as pd
-import math
-from decimal import Decimal, ROUND_HALF_UP, ROUND_HALF_EVEN
+from pandas import DataFrame, concat
+from math import sin, cos, radians
+from decimal import Decimal, ROUND_HALF_UP
 import pareto_GA as ga
-import random
-from decimal import Decimal
-import pickle
-import joblib
 import practice_evaluate_sampleple as es
 
 class evaluate_sample:
