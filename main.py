@@ -1,24 +1,23 @@
-# -*- coding: utf-8 -*-
-# コーディング規約は基本的にPEP8に準じて作成します。
-#import sys
-#sys.path.remove('/opt/ros/kinetic/lib/python2.7/dist-packages')
-import matplotlib.pyplot as plt
-import cv2
-import numpy as np
-import scipy.ndimage
-from IPython.display import Image, display_png
-import pandas as pd
-import math
-from decimal import Decimal, ROUND_HALF_UP, ROUND_HALF_EVEN
-import pareto_GA as ga
-import random
-from decimal import Decimal
-import pickle
-import joblib
-import practice_evaluate_sampleple as es
+#!/usr/bin/env python
+# coding: utf-8
 
+# In[1]:
+
+
+from cv2 import rectangle, imwrite
+import numpy as np
+from pandas import DataFrame
+from decimal import Decimal
+import pareto_GA as ga
+from random import randint
+import practice_evaluate_sampleple as es
 from multiprocessing import Pool
 from multiprocessing import Process
+from time import perf_counter
+
+
+# In[2]:
+
 
 # 設置可能ランドマーク数
 GENOM_LENGTH = 111
@@ -35,141 +34,143 @@ MAX_GENERATION = 1000
 
 #LANDMARK_NUM = 40
 
+
+# In[3]:
+
+
 def create_genom(length):
     """
-    引数で指定された桁のランダムな遺伝子情報を生成、格納したgenomClassで返します。
     :param length: 遺伝子情報の長さ
     :return: 生成した個体集団genomClass
     """
-    genome_list = []
-    for i in range(length):
-        genome_list.append(random.randint(0, 1))
+    genome_list = [randint(0, 1) for i in range(length)]
     return ga.genom(genome_list, 0)#評価値0のgenomオブジェクト_osanai
 
 
+# In[4]:
+
+
 def evaluation_1(li):
-    """評価関数です。今回は全ての遺伝子が1となれば最適解となるので、
-    合計して遺伝子と同じ長さの数となった場合を1として0.00~1.00で評価します
-    :param ga: 評価を行うgenomClass
+    """
     :return: 評価処理をしたgenomClassを返す
     """
 
     img = np.full((1050, 1700, 3), 255, dtype=np.uint8)
 
     #左の壁
-    cv2.rectangle(img, (435, 410), (435, 636), (0, 0, 0), thickness=-1)
-    cv2.rectangle(img, (436, 479), (442, 479), (0, 0, 0), thickness=-1)
-    cv2.rectangle(img, (441, 527), (442, 528), (0, 0, 0), thickness=-1)
-    cv2.rectangle(img, (436, 576), (442, 576), (0, 0, 0), thickness=-1)
-    cv2.rectangle(img, (441, 480), (441, 575), (0, 0, 0), thickness=-1)
+    rectangle(img, (435, 410), (435, 636), (0, 0, 0), thickness=-1)
+    rectangle(img, (436, 479), (442, 479), (0, 0, 0), thickness=-1)
+    rectangle(img, (441, 527), (442, 528), (0, 0, 0), thickness=-1)
+    rectangle(img, (436, 576), (442, 576), (0, 0, 0), thickness=-1)
+    rectangle(img, (441, 480), (441, 575), (0, 0, 0), thickness=-1)
 
     #上の柱
-    cv2.rectangle(img, (541, 411), (542, 419), (0, 0, 0), thickness=-1)
-    cv2.rectangle(img, (663, 411), (664, 419), (0, 0, 0), thickness=-1)
-    cv2.rectangle(img, (785, 411), (786, 419), (0, 0, 0), thickness=-1)
-    cv2.rectangle(img, (907, 411), (908, 419), (0, 0, 0), thickness=-1)
-    cv2.rectangle(img, (1030, 411), (1031, 419), (0, 0, 0), thickness=-1)
-    cv2.rectangle(img, (1153, 411), (1154, 419), (0, 0, 0), thickness=-1)
+    rectangle(img, (541, 411), (542, 419), (0, 0, 0), thickness=-1)
+    rectangle(img, (663, 411), (664, 419), (0, 0, 0), thickness=-1)
+    rectangle(img, (785, 411), (786, 419), (0, 0, 0), thickness=-1)
+    rectangle(img, (907, 411), (908, 419), (0, 0, 0), thickness=-1)
+    rectangle(img, (1030, 411), (1031, 419), (0, 0, 0), thickness=-1)
+    rectangle(img, (1153, 411), (1154, 419), (0, 0, 0), thickness=-1)
 
     #下の壁
-    cv2.rectangle(img, (457, 641), (1246, 641), (0, 0, 0), thickness=-1)
+    rectangle(img, (457, 641), (1246, 641), (0, 0, 0), thickness=-1)
 
     #右の壁
-    cv2.rectangle(img, (1163+100, 310+100), (1163+100, 536+100), (0, 0, 0), thickness=-1)
-    cv2.rectangle(img, (1156+100, 379+100), (1162+100, 379+100), (0, 0, 0), thickness=-1)
-    cv2.rectangle(img, (1156+100, 427+100), (1157+100, 428+100), (0, 0, 0), thickness=-1)
-    cv2.rectangle(img, (1156+100, 476+100), (1162+100, 476+100), (0, 0, 0), thickness=-1)
-    cv2.rectangle(img, (1157+100, 380+100), (1157+100, 475+100), (0, 0, 0), thickness=-1)
+    rectangle(img, (1163+100, 310+100), (1163+100, 536+100), (0, 0, 0), thickness=-1)
+    rectangle(img, (1156+100, 379+100), (1162+100, 379+100), (0, 0, 0), thickness=-1)
+    rectangle(img, (1156+100, 427+100), (1157+100, 428+100), (0, 0, 0), thickness=-1)
+    rectangle(img, (1156+100, 476+100), (1162+100, 476+100), (0, 0, 0), thickness=-1)
+    rectangle(img, (1157+100, 380+100), (1157+100, 475+100), (0, 0, 0), thickness=-1)
 
     #支柱の表示_1
-    cv2.rectangle(img, (421+100, 457), (421+100, 457), (0, 0, 0), thickness=-1)
-    cv2.rectangle(img, (482+100, 457), (482+100, 457), (0, 0, 0), thickness=-1)
-    cv2.rectangle(img, (542+100, 457), (542+100, 457), (0, 0, 0), thickness=-1)
-    cv2.rectangle(img, (603+100, 457), (603+100, 457), (0, 0, 0), thickness=-1)
-    cv2.rectangle(img, (665+100, 457), (665+100, 457), (0, 0, 0), thickness=-1)
-    cv2.rectangle(img, (726+100, 457), (726+100, 457), (0, 0, 0), thickness=-1)
-    cv2.rectangle(img, (786+100, 457), (786+100, 457), (0, 0, 0), thickness=-1)
-    cv2.rectangle(img, (847+100, 457), (847+100, 457), (0, 0, 0), thickness=-1)
-    cv2.rectangle(img, (908+100, 457), (908+100, 457), (0, 0, 0), thickness=-1)
-    cv2.rectangle(img, (949+100, 457), (949+100, 457), (0, 0, 0), thickness=-1)
-    cv2.rectangle(img, (991+100, 457), (991+100, 457), (0, 0, 0), thickness=-1)
-    cv2.rectangle(img, (1052+100, 457), (1052+100, 457), (0, 0, 0), thickness=-1)
-    cv2.rectangle(img, (1113+100, 457), (1113+100, 457), (0, 0, 0), thickness=-1)
+    rectangle(img, (421+100, 457), (421+100, 457), (0, 0, 0), thickness=-1)
+    rectangle(img, (482+100, 457), (482+100, 457), (0, 0, 0), thickness=-1)
+    rectangle(img, (542+100, 457), (542+100, 457), (0, 0, 0), thickness=-1)
+    rectangle(img, (603+100, 457), (603+100, 457), (0, 0, 0), thickness=-1)
+    rectangle(img, (665+100, 457), (665+100, 457), (0, 0, 0), thickness=-1)
+    rectangle(img, (726+100, 457), (726+100, 457), (0, 0, 0), thickness=-1)
+    rectangle(img, (786+100, 457), (786+100, 457), (0, 0, 0), thickness=-1)
+    rectangle(img, (847+100, 457), (847+100, 457), (0, 0, 0), thickness=-1)
+    rectangle(img, (908+100, 457), (908+100, 457), (0, 0, 0), thickness=-1)
+    rectangle(img, (949+100, 457), (949+100, 457), (0, 0, 0), thickness=-1)
+    rectangle(img, (991+100, 457), (991+100, 457), (0, 0, 0), thickness=-1)
+    rectangle(img, (1052+100, 457), (1052+100, 457), (0, 0, 0), thickness=-1)
+    rectangle(img, (1113+100, 457), (1113+100, 457), (0, 0, 0), thickness=-1)
 
     #支柱の表示_2
-    cv2.rectangle(img, (421+100, 474), (421+100, 474), (0, 0, 0), thickness=-1)
-    cv2.rectangle(img, (482+100, 474), (482+100, 474), (0, 0, 0), thickness=-1)
-    cv2.rectangle(img, (542+100, 474), (542+100, 474), (0, 0, 0), thickness=-1)
-    cv2.rectangle(img, (603+100, 474), (603+100, 474), (0, 0, 0), thickness=-1)
-    cv2.rectangle(img, (665+100, 474), (665+100, 474), (0, 0, 0), thickness=-1)
-    cv2.rectangle(img, (726+100, 474), (726+100, 474), (0, 0, 0), thickness=-1)
-    cv2.rectangle(img, (786+100, 474), (786+100, 474), (0, 0, 0), thickness=-1)
-    cv2.rectangle(img, (847+100, 474), (847+100, 474), (0, 0, 0), thickness=-1)
-    cv2.rectangle(img, (908+100, 474), (908+100, 474), (0, 0, 0), thickness=-1)
-    cv2.rectangle(img, (949+100, 474), (949+100, 474), (0, 0, 0), thickness=-1)
-    cv2.rectangle(img, (991+100, 474), (991+100, 474), (0, 0, 0), thickness=-1)
-    cv2.rectangle(img, (1052+100, 474), (1052+100, 474), (0, 0, 0), thickness=-1)
-    cv2.rectangle(img, (1113+100, 474), (1113+100, 474), (0, 0, 0), thickness=-1)
+    rectangle(img, (421+100, 474), (421+100, 474), (0, 0, 0), thickness=-1)
+    rectangle(img, (482+100, 474), (482+100, 474), (0, 0, 0), thickness=-1)
+    rectangle(img, (542+100, 474), (542+100, 474), (0, 0, 0), thickness=-1)
+    rectangle(img, (603+100, 474), (603+100, 474), (0, 0, 0), thickness=-1)
+    rectangle(img, (665+100, 474), (665+100, 474), (0, 0, 0), thickness=-1)
+    rectangle(img, (726+100, 474), (726+100, 474), (0, 0, 0), thickness=-1)
+    rectangle(img, (786+100, 474), (786+100, 474), (0, 0, 0), thickness=-1)
+    rectangle(img, (847+100, 474), (847+100, 474), (0, 0, 0), thickness=-1)
+    rectangle(img, (908+100, 474), (908+100, 474), (0, 0, 0), thickness=-1)
+    rectangle(img, (949+100, 474), (949+100, 474), (0, 0, 0), thickness=-1)
+    rectangle(img, (991+100, 474), (991+100, 474), (0, 0, 0), thickness=-1)
+    rectangle(img, (1052+100, 474), (1052+100, 474), (0, 0, 0), thickness=-1)
+    rectangle(img, (1113+100, 474), (1113+100, 474), (0, 0, 0), thickness=-1)
 
     #支柱の表示_3
-    cv2.rectangle(img, (421+100, 517), (421+100, 517), (0, 0, 0), thickness=-1)
-    cv2.rectangle(img, (482+100, 517), (482+100, 517), (0, 0, 0), thickness=-1)
-    cv2.rectangle(img, (542+100, 517), (542+100, 517), (0, 0, 0), thickness=-1)
-    cv2.rectangle(img, (603+100, 517), (603+100, 517), (0, 0, 0), thickness=-1)
-    cv2.rectangle(img, (665+100, 517), (665+100, 517), (0, 0, 0), thickness=-1)
-    cv2.rectangle(img, (726+100, 517), (726+100, 517), (0, 0, 0), thickness=-1)
-    cv2.rectangle(img, (786+100, 517), (786+100, 517), (0, 0, 0), thickness=-1)
-    cv2.rectangle(img, (847+100, 517), (847+100, 517), (0, 0, 0), thickness=-1)
-    cv2.rectangle(img, (908+100, 517), (908+100, 517), (0, 0, 0), thickness=-1)
-    cv2.rectangle(img, (949+100, 517), (949+100, 517), (0, 0, 0), thickness=-1)
-    cv2.rectangle(img, (991+100, 517), (991+100, 517), (0, 0, 0), thickness=-1)
-    cv2.rectangle(img, (1052+100, 517), (1052+100, 517), (0, 0, 0), thickness=-1)
-    cv2.rectangle(img, (1113+100, 517), (1113+100, 517), (0, 0, 0), thickness=-1)
+    rectangle(img, (421+100, 517), (421+100, 517), (0, 0, 0), thickness=-1)
+    rectangle(img, (482+100, 517), (482+100, 517), (0, 0, 0), thickness=-1)
+    rectangle(img, (542+100, 517), (542+100, 517), (0, 0, 0), thickness=-1)
+    rectangle(img, (603+100, 517), (603+100, 517), (0, 0, 0), thickness=-1)
+    rectangle(img, (665+100, 517), (665+100, 517), (0, 0, 0), thickness=-1)
+    rectangle(img, (726+100, 517), (726+100, 517), (0, 0, 0), thickness=-1)
+    rectangle(img, (786+100, 517), (786+100, 517), (0, 0, 0), thickness=-1)
+    rectangle(img, (847+100, 517), (847+100, 517), (0, 0, 0), thickness=-1)
+    rectangle(img, (908+100, 517), (908+100, 517), (0, 0, 0), thickness=-1)
+    rectangle(img, (949+100, 517), (949+100, 517), (0, 0, 0), thickness=-1)
+    rectangle(img, (991+100, 517), (991+100, 517), (0, 0, 0), thickness=-1)
+    rectangle(img, (1052+100, 517), (1052+100, 517), (0, 0, 0), thickness=-1)
+    rectangle(img, (1113+100, 517), (1113+100, 517), (0, 0, 0), thickness=-1)
 
     #支柱の表示_4
-    cv2.rectangle(img, (421+100, 534), (421+100, 534), (0, 0, 0), thickness=-1)
-    cv2.rectangle(img, (482+100, 534), (482+100, 534), (0, 0, 0), thickness=-1)
-    cv2.rectangle(img, (542+100, 534), (542+100, 534), (0, 0, 0), thickness=-1)
-    cv2.rectangle(img, (603+100, 534), (603+100, 534), (0, 0, 0), thickness=-1)
-    cv2.rectangle(img, (665+100, 534), (665+100, 534), (0, 0, 0), thickness=-1)
-    cv2.rectangle(img, (726+100, 534), (726+100, 534), (0, 0, 0), thickness=-1)
-    cv2.rectangle(img, (786+100, 534), (786+100, 534), (0, 0, 0), thickness=-1)
-    cv2.rectangle(img, (847+100, 534), (847+100, 534), (0, 0, 0), thickness=-1)
-    cv2.rectangle(img, (908+100, 534), (908+100, 534), (0, 0, 0), thickness=-1)
-    cv2.rectangle(img, (949+100, 534), (949+100, 534), (0, 0, 0), thickness=-1)
-    cv2.rectangle(img, (991+100, 534), (991+100, 534), (0, 0, 0), thickness=-1)
-    cv2.rectangle(img, (1052+100, 534), (1052+100, 534), (0, 0, 0), thickness=-1)
-    cv2.rectangle(img, (1113+100, 534), (1113+100, 534), (0, 0, 0), thickness=-1)
+    rectangle(img, (421+100, 534), (421+100, 534), (0, 0, 0), thickness=-1)
+    rectangle(img, (482+100, 534), (482+100, 534), (0, 0, 0), thickness=-1)
+    rectangle(img, (542+100, 534), (542+100, 534), (0, 0, 0), thickness=-1)
+    rectangle(img, (603+100, 534), (603+100, 534), (0, 0, 0), thickness=-1)
+    rectangle(img, (665+100, 534), (665+100, 534), (0, 0, 0), thickness=-1)
+    rectangle(img, (726+100, 534), (726+100, 534), (0, 0, 0), thickness=-1)
+    rectangle(img, (786+100, 534), (786+100, 534), (0, 0, 0), thickness=-1)
+    rectangle(img, (847+100, 534), (847+100, 534), (0, 0, 0), thickness=-1)
+    rectangle(img, (908+100, 534), (908+100, 534), (0, 0, 0), thickness=-1)
+    rectangle(img, (949+100, 534), (949+100, 534), (0, 0, 0), thickness=-1)
+    rectangle(img, (991+100, 534), (991+100, 534), (0, 0, 0), thickness=-1)
+    rectangle(img, (1052+100, 534), (1052+100, 534), (0, 0, 0), thickness=-1)
+    rectangle(img, (1113+100, 534), (1113+100, 534), (0, 0, 0), thickness=-1)
 
     #支柱の表示_5
-    cv2.rectangle(img, (421+100, 575), (421+100, 575), (0, 0, 0), thickness=-1)
-    cv2.rectangle(img, (482+100, 575), (482+100, 575), (0, 0, 0), thickness=-1)
-    cv2.rectangle(img, (542+100, 575), (542+100, 575), (0, 0, 0), thickness=-1)
-    cv2.rectangle(img, (603+100, 575), (603+100, 575), (0, 0, 0), thickness=-1)
-    cv2.rectangle(img, (665+100, 575), (665+100, 575), (0, 0, 0), thickness=-1)
-    cv2.rectangle(img, (726+100, 575), (726+100, 575), (0, 0, 0), thickness=-1)
-    cv2.rectangle(img, (786+100, 575), (786+100, 575), (0, 0, 0), thickness=-1)
-    cv2.rectangle(img, (847+100, 575), (847+100, 575), (0, 0, 0), thickness=-1)
-    cv2.rectangle(img, (908+100, 575), (908+100, 575), (0, 0, 0), thickness=-1)
-    cv2.rectangle(img, (949+100, 575), (949+100, 575), (0, 0, 0), thickness=-1)
-    cv2.rectangle(img, (991+100, 575), (991+100, 575), (0, 0, 0), thickness=-1)
-    cv2.rectangle(img, (1052+100, 575), (1052+100, 575), (0, 0, 0), thickness=-1)
-    cv2.rectangle(img, (1113+100, 575), (1113+100, 575), (0, 0, 0), thickness=-1)
+    rectangle(img, (421+100, 575), (421+100, 575), (0, 0, 0), thickness=-1)
+    rectangle(img, (482+100, 575), (482+100, 575), (0, 0, 0), thickness=-1)
+    rectangle(img, (542+100, 575), (542+100, 575), (0, 0, 0), thickness=-1)
+    rectangle(img, (603+100, 575), (603+100, 575), (0, 0, 0), thickness=-1)
+    rectangle(img, (665+100, 575), (665+100, 575), (0, 0, 0), thickness=-1)
+    rectangle(img, (726+100, 575), (726+100, 575), (0, 0, 0), thickness=-1)
+    rectangle(img, (786+100, 575), (786+100, 575), (0, 0, 0), thickness=-1)
+    rectangle(img, (847+100, 575), (847+100, 575), (0, 0, 0), thickness=-1)
+    rectangle(img, (908+100, 575), (908+100, 575), (0, 0, 0), thickness=-1)
+    rectangle(img, (949+100, 575), (949+100, 575), (0, 0, 0), thickness=-1)
+    rectangle(img, (991+100, 575), (991+100, 575), (0, 0, 0), thickness=-1)
+    rectangle(img, (1052+100, 575), (1052+100, 575), (0, 0, 0), thickness=-1)
+    rectangle(img, (1113+100, 575), (1113+100, 575), (0, 0, 0), thickness=-1)
 
     #支柱の表示_6
-    cv2.rectangle(img, (421+100, 592), (421+100, 592), (0, 0, 0), thickness=-1)
-    cv2.rectangle(img, (482+100, 592), (482+100, 592), (0, 0, 0), thickness=-1)
-    cv2.rectangle(img, (542+100, 592), (542+100, 592), (0, 0, 0), thickness=-1)
-    cv2.rectangle(img, (603+100, 592), (603+100, 592), (0, 0, 0), thickness=-1)
-    cv2.rectangle(img, (665+100, 592), (665+100, 592), (0, 0, 0), thickness=-1)
-    cv2.rectangle(img, (726+100, 592), (726+100, 592), (0, 0, 0), thickness=-1)
-    cv2.rectangle(img, (786+100, 592), (786+100, 592), (0, 0, 0), thickness=-1)
-    cv2.rectangle(img, (847+100, 592), (847+100, 592), (0, 0, 0), thickness=-1)
-    cv2.rectangle(img, (908+100, 592), (908+100, 592), (0, 0, 0), thickness=-1)
-    cv2.rectangle(img, (949+100, 592), (949+100, 592), (0, 0, 0), thickness=-1)
-    cv2.rectangle(img, (991+100, 592), (991+100, 592), (0, 0, 0), thickness=-1)
-    cv2.rectangle(img, (1052+100, 592), (1052+100, 592), (0, 0, 0), thickness=-1)
-    cv2.rectangle(img, (1113+100, 592), (1113+100, 592), (0, 0, 0), thickness=-1)
+    rectangle(img, (421+100, 592), (421+100, 592), (0, 0, 0), thickness=-1)
+    rectangle(img, (482+100, 592), (482+100, 592), (0, 0, 0), thickness=-1)
+    rectangle(img, (542+100, 592), (542+100, 592), (0, 0, 0), thickness=-1)
+    rectangle(img, (603+100, 592), (603+100, 592), (0, 0, 0), thickness=-1)
+    rectangle(img, (665+100, 592), (665+100, 592), (0, 0, 0), thickness=-1)
+    rectangle(img, (726+100, 592), (726+100, 592), (0, 0, 0), thickness=-1)
+    rectangle(img, (786+100, 592), (786+100, 592), (0, 0, 0), thickness=-1)
+    rectangle(img, (847+100, 592), (847+100, 592), (0, 0, 0), thickness=-1)
+    rectangle(img, (908+100, 592), (908+100, 592), (0, 0, 0), thickness=-1)
+    rectangle(img, (949+100, 592), (949+100, 592), (0, 0, 0), thickness=-1)
+    rectangle(img, (991+100, 592), (991+100, 592), (0, 0, 0), thickness=-1)
+    rectangle(img, (1052+100, 592), (1052+100, 592), (0, 0, 0), thickness=-1)
+    rectangle(img, (1113+100, 592), (1113+100, 592), (0, 0, 0), thickness=-1)
 
     #ランドマークの表示
     list_land = [(421+100, 357+100), (421+100, 374+100), (421+100, 357+100), (482+100, 357+100), (421+100, 374+100), (482+100, 374+100), (482+100, 357+100), (482+100, 374+100), (482+100, 357+100), (542+100, 357+100), (482+100, 374+100), (542+100, 374+100), (542+100, 357+100), (542+100, 374+100),
@@ -190,52 +191,60 @@ def evaluation_1(li):
             (847+100, 475+100), (847+100, 492+100), (847+100, 475+100), (908+100, 475+100), (847+100, 492+100), (908+100, 492+100), (908+100, 475+100), (908+100, 492+100), (908+100, 475+100), (949+100, 475+100), (908+100, 492+100), (949+100, 492+100), (949+100, 475+100), (949+100, 492+100),
             (949+100, 475+100), (991+100, 475+100), (949+100, 492+100), (991+100, 492+100), (991+100, 475+100), (991+100, 492+100), (991+100, 475+100), (1052+100, 475+100), (991+100, 492+100), (1052+100, 492+100), (1052+100, 475+100), (1052+100, 492+100), (1052+100, 475+100), (1113+100, 475+100),
             (1052+100, 492+100), (1113+100, 492+100), (1113+100, 475+100), (1113+100, 492+100)]
-
+    
     data_map_dic = {}
     for d in range(GENOM_LENGTH):
         if li[d] == 1:
-            cv2.rectangle(img, list_land[2*d], list_land[2*d+1], (0,0,0), thickness=-1)
+            rectangle(img, list_land[2*d], list_land[2*d+1], (0,0,0), thickness=-1)
 
     
     #画像生成
-    cv2.imwrite('1221_pareto_roulette_1000_%d.png' % current_generation_individual_genomlist.index(li), img)
-    #cv2.imwrite('../map_evaluate/debug/uc_taromap_noprop_%d.png' % current_generation_individual_group.index(ga), img)
+    imwrite('1221_pareto_roulette_1000_%d.png' % current_generation_individual_genomlist.index(li), img)
+    #imwrite('../map_evaluate/debug/uc_taromap_noprop_%d.png' % current_generation_individual_group.index(ga), img)
 
     #Nscore算出！！！！
     sample = es.evaluate_sample(urg_pix=400, geomap='1221_pareto_roulette_1000_%d.png' % current_generation_individual_genomlist.index(li))
 
-    resemblance = []
-    resemblance_rotation = []
-    resemblance_rotation_both = []
     count = sample.map_from_img()
-
+    
+    map_init_u = sample.map_init_u
+    urg_scan = sample.urg_scan
+    bresenham = sample.bresenham
+    feature_df = sample.feature_df
+    urg_scan_rotation = sample.urg_scan_rotation
+    bresenham_rotation = sample.bresenham_rotation
+    feature_df_rotation = sample.feature_df_rotation
+    
+    Urg_similarity = sample.Urg_similarity
+    Urg_similarity_rotation = sample.Urg_similarity_rotation
+    Urg_similarity_rotation_both = sample.Urg_similarity_rotation_both
+    
     for d in range(count):
-        sample.map_init_u(current_num=d)
-        sample.urg_scan(current_num=d)
-        sample.bresenham(current_num=d)
-        sample.feature_df(current_num=d,total_num=count)
-        sample.urg_scan_rotation(current_num=d)
-        sample.bresenham_rotation(current_num=d)
-        sample.feature_df_rotation(current_num=d,total_num=count)
+        map_init_u(current_num=d)
+        urg_scan(current_num=d)
+        bresenham(current_num=d)
+        feature_df(current_num=d,total_num=count)
+        urg_scan_rotation(current_num=d)
+        bresenham_rotation(current_num=d)
+        feature_df_rotation(current_num=d,total_num=count)
 
-    for d in range(count):   
-        resemblance.append(sample.Urg_similarity(current_num=d,total_num=count))
-        resemblance_rotation.append(sample.Urg_similarity_rotation(current_num=d,total_num=count))
-        resemblance_rotation_both.append(sample.Urg_similarity_rotation_both(current_num=d,total_num=count))
+    resemblance = [Urg_similarity(current_num=d,total_num=count) for d in range(count)]
+    resemblance_rotation = [Urg_similarity_rotation(current_num=d,total_num=count) for d in range(count)]
+    resemblance_rotation_both = [Urg_similarity_rotation_both(current_num=d,total_num=count) for d in range(count)]
 
     replace = np.array(resemblance)#縦横0度同士path1~3_osanai
     replace_rotation = np.array(resemblance_rotation)#縦180度，横0度path1~3_osanai
     replace_rotation_both = np.array(resemblance_rotation_both)#縦横180度同士path1~3_osanai
 
-    df1 = pd.DataFrame(replace)
+    df1 = DataFrame(replace)
     df1_sum = df1.sum()
     df1_sum_sum = (df1_sum.sum()-len(sample.robot_points))/2#同じとこ除外(-類似度1*114)と、かぶってるとこ除外(÷２),要素数は(114*114)/2_osanai
 
-    df2 = pd.DataFrame(replace_rotation)
+    df2 = DataFrame(replace_rotation)
     df2_sum = df2.sum()
     df2_sum_sum = df2_sum.sum()#要素数は114*114_osanai
 
-    df3 = pd.DataFrame(replace_rotation_both)
+    df3 = DataFrame(replace_rotation_both)
     df3_sum = df3.sum()
     df3_sum_sum = (df3_sum.sum()-len(sample.robot_points))/2#同じとこ除外(-類似度1*114)と、かぶってるとこ除外(÷２),要素数は(114*114)/2_osanai
 
@@ -251,6 +260,10 @@ def evaluation_1(li):
     #landmark_num_er = abs(sum(li) - LANDMARK_NUM)
     #print("map" + str(current_generation_individual_genomlist.index(li)), landmark_num_er, li)
     #return landmark_num_er
+
+
+# In[5]:
+
 
 def select(ga, elite):
     """選択関数です。エリート選択を行います
@@ -274,7 +287,7 @@ def select(ga, elite):
     # 一定の上位を抽出する
     #result = [sort_result.pop(0) for i in range(elite)]
 
-    r = random.randint(0, p_sum_list[len(p_sum_list) - 1])
+    r = randint(0, p_sum_list[len(p_sum_list) - 1])
     if r >= p_sum_list[len(p_sum_list) - 2]:
         result.append(sort_result.pop(len(sort_result) - 1))
     elif r >= p_sum_list[len(p_sum_list) - 3]:
@@ -326,7 +339,7 @@ def select(ga, elite):
         p_sum_list.append(sum(p[0:i+1]))
     #print("p_1_sum_list:" + str(p_sum_list))#どんどん大きくなる19個のはず
 
-    r = random.randint(0, p_sum_list[len(p_sum_list) - 1])
+    r = randint(0, p_sum_list[len(p_sum_list) - 1])
     if r >= p_sum_list[len(p_sum_list) - 2]:
         result.append(sort_result.pop(len(sort_result) - 1))
     elif r >= p_sum_list[len(p_sum_list) - 3]:
@@ -378,7 +391,7 @@ def select(ga, elite):
         p_sum_list.append(sum(p[0:i+1]))
     #print("p_2_sum_list:" + str(p_sum_list))#どんどん大きくなる18個のはず
 
-    r = random.randint(0, p_sum_list[len(p_sum_list) - 1])
+    r = randint(0, p_sum_list[len(p_sum_list) - 1])
     if r >= p_sum_list[len(p_sum_list) - 2]:
         result.append(sort_result.pop(len(sort_result) - 1))
     elif r >= p_sum_list[len(p_sum_list) - 3]:
@@ -419,6 +432,10 @@ def select(ga, elite):
     print("result:" + str(len(result)))#3のはず	   		
     return result
 
+
+# In[6]:
+
+
 def crossover(ga_one, ga_second):
     """交叉関数です。二点交叉を行います。
     :param ga: 交叉させるgenomClassの配列
@@ -429,8 +446,8 @@ def crossover(ga_one, ga_second):
     # 子孫を格納するリストを生成します
     genom_list = []
     # 入れ替える二点の点を設定します→[1:25]
-    cross_one = random.randint(0, GENOM_LENGTH)
-    cross_second = random.randint(cross_one, GENOM_LENGTH)
+    cross_one = randint(0, GENOM_LENGTH)
+    cross_second = randint(cross_one, GENOM_LENGTH)
     # 遺伝子を取り出します
     one = ga_one.getGenom()
     second = ga_second.getGenom()
@@ -441,6 +458,10 @@ def crossover(ga_one, ga_second):
     genom_list.append(ga.genom(progeny_one, 0))
     genom_list.append(ga.genom(progeny_second, 0))
     return genom_list
+
+
+# In[7]:
+
 
 def next_generation_gene_create(ga, ga_progeny):
     """
@@ -461,6 +482,10 @@ def next_generation_gene_create(ga, ga_progeny):
 
     return next_generation_geno
 
+
+# In[8]:
+
+
 def mutation(ga, induvidual_mutation, genom_mutation):
     """突然変異関数です。
     :param ga: genomClass
@@ -468,12 +493,12 @@ def mutation(ga, induvidual_mutation, genom_mutation):
     ga_list = []
     for i in ga[0:(MAX_GENOM_LIST - 1)]:
         # 個体に対して一定の確率で突然変異が起きる
-        if induvidual_mutation > (random.randint(0, 100) / Decimal(100)):
+        if induvidual_mutation > (randint(0, 100) / Decimal(100)):
             genom_list = []
             for i_ in i.getGenom():
                 # 個体の遺伝子情報一つ一つに対して突然変異がおこる
-                if genom_mutation > (random.randint(0, 100) / Decimal(100)):
-                    genom_list.append(random.randint(0, 1))
+                if genom_mutation > (randint(0, 100) / Decimal(100)):
+                    genom_list.append(randint(0, 1))
                 else:
                     genom_list.append(i_)
             i.setGenom(genom_list)
@@ -484,18 +509,18 @@ def mutation(ga, induvidual_mutation, genom_mutation):
     print("ga_list_len：" + str(len(ga_list)))
     return ga_list
 
+
+# In[9]:
+
+
 def multi_1(n):
     p = Pool(10) #最大プロセス数:10
     result_1 = p.map(evaluation_1, n)
     #print(result_1)
     return result_1
-    
-#def multi_2(n):
-#    p = Pool(10) #最大プロセス数:10
-#    result_2 = p.map(evaluation_2, n)
-#    print(result_2)
-#    return result_2
 
+
+# In[10]:
 
 
 if __name__ == '__main__':
@@ -513,13 +538,15 @@ if __name__ == '__main__':
     for i in range(MAX_GENOM_LIST):
         current_generation_individual_group.append(create_genom(GENOM_LENGTH))
         current_generation_individual_genomlist.append(current_generation_individual_group[i].getGenom())
-
     for count_ in range(1, MAX_GENERATION + 1):
+        start_time = perf_counter()
         evaluation_1_result_1 = multi_1(current_generation_individual_genomlist[0:10])#current_generation_individual_genomlist=二次元リスト_1129osanai
         evaluation_1_result_2 = multi_1(current_generation_individual_genomlist[10:20])
         evaluation_1_result = evaluation_1_result_1 + evaluation_1_result_2
         print(evaluation_1_result)
-        
+        end_time = perf_counter()
+        elapsed_time = end_time - start_time
+        print("評価時間：{}".format(elapsed_time))
 #        evaluation_2_result_1 = multi_2(current_generation_individual_genomlist[0:10])
 #        evaluation_2_result_2 = multi_2(current_generation_individual_genomlist[10:20])
 #        evaluation_2_result = evaluation_2_result_1 + evaluation_2_result_2
@@ -541,7 +568,6 @@ if __name__ == '__main__':
 
 #            rank_list.append(rank)
 #        print(rank_list)
-###        
         for i in range (0, MAX_GENOM_LIST):
             current_generation_individual_group[i].setEvaluation_1(evaluation_1_result[i])#対象のゲノムオブジェクトに評価値をセット_osanai
 #            current_generation_individual_group[i].setEvaluation_2(evaluation_2_result[i])
@@ -648,3 +674,10 @@ if __name__ == '__main__':
     #print("各世代の平均値は{}".format(avg_group))
     #print("最も優れた個体は{}".format(elite_genes[0].getGenom()))
     #print("各世代の猛者は{}".format(min_geomap_group))
+
+
+# In[ ]:
+
+
+
+

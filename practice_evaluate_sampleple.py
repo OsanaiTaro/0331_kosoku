@@ -101,8 +101,8 @@ class evaluate_sample:
         original_y = self.robot_points[current_num][0]#v座標
 
         for r in self.deg_list:#角度分解能でループ
-            x_ = self.urg_range * math.cos(math.radians(90-r))
-            y_ = self.urg_range * math.sin(math.radians(90-r))
+            x_ = self.urg_range * cos(radians(90-r))
+            y_ = self.urg_range * sin(radians(90-r))
             x_ = Decimal(str(x_)).quantize(Decimal('0'), rounding=ROUND_HALF_UP)#少数第一位で四捨五入
             y_ = Decimal(str(y_)).quantize(Decimal('0'), rounding=ROUND_HALF_UP)
             x  = original_x + x_
@@ -138,7 +138,7 @@ class evaluate_sample:
             y_step = 1 if original_y < y else -1 #y座標の増分　基準点から見て上か下か_osanai
 
             for write_x in range(original_x, x+inc, inc):#基準点からLiDARの最端まで1か-1ずつ増加させる_osanai
-                if step:#???
+                if step:
                     if self.object_map[write_x][write_y] == 1:#障害物がある場合_osanai
                         d = self.distance_map[write_x][write_y]#LiDARの位置から障害物までの距離をdとする_osanai
                         self.range_list.append(d)#距離情報をlistに追加
@@ -167,11 +167,11 @@ class evaluate_sample:
         
     def feature_df(self, current_num=0, total_num=0):
         if self.initial_flag == False:
-            self.comparison_list = pd.DataFrame(data=self.range_list, index=self.deg_list)#行でLiDARの照射角度、列で経路上の基準点を指定する、物体距離情報のデータフレーム_osanai
+            self.comparison_list = DataFrame(data=self.range_list, index=self.deg_list)#行でLiDARの照射角度、列で経路上の基準点を指定する、物体距離情報のデータフレーム_osanai
             self.initial_flag = True
         else:
-            update_list = pd.DataFrame(data=self.range_list, index=self.deg_list, columns=[current_num])
-            self.comparison_list = pd.concat([self.comparison_list, update_list], axis=1, sort=True)#もともとのやつと結合させる
+            update_list = DataFrame(data=self.range_list, index=self.deg_list, columns=[current_num])
+            self.comparison_list = concat([self.comparison_list, update_list], axis=1, sort=True)#もともとのやつと結合させる
         comparison_bool = (self.comparison_list.iloc[:-1,:total_num] > 0.0)#ローカル変数　最後の行、2193列までdがあればTrue、0ならばFalseを格納_osanai
         self.comparison_list.loc['count'] = comparison_bool.sum()#それぞれのポイントでの物体座標数　データフレームにcount行を追加？？ Trueの数を数えている？？_osanai
         #print(comparison_bool)
@@ -200,8 +200,8 @@ class evaluate_sample:
         original_y = self.robot_points[current_num][0]#v座標
 
         for r in self.deg_list:
-            x_ = self.urg_range * math.cos(math.radians(90-(r-self.rotation)))#180°回転！！_osanai
-            y_ = self.urg_range * math.sin(math.radians(90-(r-self.rotation)))#180°回転！！_osanai
+            x_ = self.urg_range * cos(radians(90-(r-self.rotation)))#180°回転！！_osanai
+            y_ = self.urg_range * sin(radians(90-(r-self.rotation)))#180°回転！！_osanai
             x_ = Decimal(str(x_)).quantize(Decimal('0'), rounding=ROUND_HALF_UP)#四捨五入
             y_ = Decimal(str(y_)).quantize(Decimal('0'), rounding=ROUND_HALF_UP)
             x  = original_x + x_
@@ -266,11 +266,11 @@ class evaluate_sample:
     
     def feature_df_rotation(self, current_num=0, total_num=0):
         if self.initial_flag_rotation == False:
-            self.comparison_list_rotation = pd.DataFrame(data=self.range_list_rotation, index=self.deg_list)
+            self.comparison_list_rotation = DataFrame(data=self.range_list_rotation, index=self.deg_list)
             self.initial_flag_rotation = True
         else:
-            update_list = pd.DataFrame(data=self.range_list_rotation, index=self.deg_list, columns=[current_num])
-            self.comparison_list_rotation = pd.concat([self.comparison_list_rotation, update_list], axis=1, sort=True)#もともとのやつと結合させる
+            update_list = DataFrame(data=self.range_list_rotation, index=self.deg_list, columns=[current_num])
+            self.comparison_list_rotation = concat([self.comparison_list_rotation, update_list], axis=1, sort=True)#もともとのやつと結合させる
         comparison_bool = (self.comparison_list_rotation.iloc[:-1,:total_num] > 0.0)
         self.comparison_list_rotation.loc['count'] = comparison_bool.sum()#それぞれのポイントでの物体座標数
     
@@ -296,7 +296,7 @@ class evaluate_sample:
         self.delta_list_rotation = self.comparison_list_rotation.copy()
         self.delta_list_rotation.drop('count', axis=0, inplace=True)
         for i in range(total_num):
-            self.delta_list_rotation.iloc[:,i] = np.abs((self.comparison_list_rotation.iloc[:,i] - self.comparison_list_rotation[current_num]))#基準としたものとの差分 0度と180度を比較_osanai
+            self.delta_list_rotation.iloc[:,i] = np.abs((self.comparison_list_rotation.iloc[:,i] - self.comparison_list_rotation[current_num]))
         comparison_bool = (self.delta_list_rotation.iloc[:,:total_num] < 4.0)
         #self.delta_list.loc['match'] = comparison_bool.sum() 
         comparison_bool2 = (self.comparison_list_rotation.iloc[:-1,:total_num] > 0.0)
